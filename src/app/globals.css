@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #2563eb;
+  --color-brand-green: #22c55e;
+}
 
 :root {
   --background: #f0f2f5;
@@ -8,7 +11,22 @@
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', sans-serif;
+  background-color: #f0f2f5;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Explicit layout constraint to fix "broken" appearance */
+.brasilrun-container {
+  width: 100% !important;
+  max-width: 448px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  min-height: 100vh;
+  background-color: white;
+  position: relative;
+  overflow-x: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
 }

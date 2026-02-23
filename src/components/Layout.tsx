@@ -40,7 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
     }, [searchQuery]);
 
     return (
-        <div className="min-h-screen flex flex-col max-w-md mx-auto bg-white shadow-xl relative overflow-x-hidden">
+        <div className="min-h-screen flex flex-col brasilrun-container shadow-xl relative overflow-x-hidden">
             {/* Admin Quick Entry */}
             {user?.role === 'admin' && (
                 <Link href="/admin" className="bg-slate-900 text-slate-100 p-1.5 text-center text-[9px] font-black uppercase tracking-[0.2em] hover:bg-black transition-colors">
@@ -216,7 +216,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
             </main>
 
             {/* Mobile Bottom Navigation */}
-            <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/80 backdrop-blur-md border-t border-gray-100 flex justify-around items-center p-2 z-50 shadow-[0_-5px_25px_rgba(0,0,0,0.1)]">
+            <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[448px] bg-white/80 backdrop-blur-md border-t border-gray-100 flex justify-around items-center p-2 z-50 shadow-[0_-5px_25px_rgba(0,0,0,0.1)]">
                 <Link href="/" className={`flex flex-col items-center gap-1 transition-all ${isActive('/') ? 'text-blue-600 scale-110' : 'text-gray-400'}`}>
                     <Home className="w-4 h-4" />
                     <span className="text-[8px] font-bold uppercase tracking-tighter">Início</span>
