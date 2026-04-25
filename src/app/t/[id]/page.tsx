@@ -99,28 +99,70 @@ export default function TopicDetail() {
                 return;
             }
 
+            const payload = {
+                topic_id: topic.id,
+                user_id: user.id,
+                content: newReply.trim(),
+                status: 'pending',
+            };
+
+            // Try insert + select (may be blocked by RLS SELECT policy)
             const { data, error } = await supabase
                 .from('replies')
-                .insert([{
-                    topic_id: topic.id,
-                    user_id: user.id,
-                    content: newReply,
-                    xtatus: 'approved'
-                }])
+                .insert([payload])
                 .select('*, profile:profiles(*)')
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                // Surface the real Supabase error for debugging
+                console.error('Supabase reply error:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                });
 
-            setReplies([...replies, data]);
+                // RLS blocks SELECT but INSERT may have succeeded — try plain insert
+                const { error: insertErr } = await supabase
+                    .from('replies')
+                    .insert([payload]);
+
+                if (insertErr) {
+                    console.error('Plain insert failed:', insertErr.message, insertErr.hint);
+                    alert(`Erro ao enviar: ${insertErr.message || 'Verifique as políticas RLS da tabela replies no Supabase.'}`);
+                    return;
+                }
+
+                // Optimistic UI
+                const optimistic = {
+                    id: `local-${Date.now()}`,
+                    ...payload,
+                    likes_count: 0,
+                    created_at: new Date().toISOString(),
+                    profile: {
+                        id: user.id,
+                        username: user.username,
+                        avatar_url: user.avatar_url,
+                        created_at: new Date().toISOString(),
+                        trust_score: user.trust_score ?? 80,
+                    },
+                };
+                setReplies(prev => [...prev, optimistic]);
+                setNewReply('');
+                return;
+            }
+
+            setReplies(prev => [...prev, data]);
             setNewReply('');
-        } catch (err) {
-            console.error('Error submitting reply:', err);
-            alert('Erro ao enviar resposta.');
+        } catch (err: any) {
+            const msg = err?.message ?? err?.code ?? JSON.stringify(err);
+            console.error('Error submitting reply:', msg);
+            alert(`Erro ao enviar resposta.\n\n${err?.message || err?.hint || 'Verifique as políticas RLS da tabela replies no Supabase.'}`);
         } finally {
             setIsSubmittingReply(false);
         }
     };
+
 
     if (loading) {
         return (
@@ -185,7 +227,7 @@ export default function TopicDetail() {
                         <span>{topic.likes_count! + (isLiking ? 1 : 0)} Gostei</span>
                     </button>
 
-                    <button className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all">
+                    <button className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-600 hover:scale-105 active:scale-95 transition-all">
                         <Sparkles className="w-3 h-3" />
                         ✨ Dica do Coach
                     </button>
@@ -217,7 +259,7 @@ export default function TopicDetail() {
                         placeholder="Sua resposta..."
                         className="flex-1 p-4 text-sm bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
                     />
-                    <button type="submit" disabled={isSubmittingReply} className="bg-blue-600 text-white p-4 rounded-2xl font-black shadow-lg">
+                    <button type="submit" disabled={isSubmittingReply} className="bg-blue-600 text-white p-4 rounded-2xl font-black border border-blue-700">
                         <Send className="w-5 h-5" strokeWidth={3} />
                     </button>
                 </form>

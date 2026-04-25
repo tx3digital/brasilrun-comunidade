@@ -1,26 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Topic, Community } from '@/lib/types';
 import Link from 'next/link';
-import { TrendingUp, MessageSquare, ChevronRight, Footprints, Flag, Activity, Star, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, ChevronRight, Footprints, Flag, Activity, Star, Loader2, RefreshCw } from 'lucide-react';
 import { MOCK_COMMUNITIES, MOCK_EVENTS } from '@/lib/mockData';
+import { type Metric, FALLBACK_METRICS, formatLastUpdated } from '@/lib/metrics';
 
 export default function Home() {
     const [latestTopics, setLatestTopics] = useState<Topic[]>([]);
-    const [totalTopicsCount, setTotalTopicsCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [metrics, setMetrics] = useState<Metric[]>(FALLBACK_METRICS);
+    const [metricsLoading, setMetricsLoading] = useState(false);
+    const [metricsLastFetch, setMetricsLastFetch] = useState<Date | null>(null);
 
     useEffect(() => {
         const fetchHomeData = async () => {
             setLoading(true);
             try {
-                // Fetch total topics count
-                const { count } = await supabase
-                    .from('topics')
-                    .select('*', { count: 'exact', head: true });
-                setTotalTopicsCount(count || 0);
 
                 // Fetch latest 3 topics with visibility rules
                 const now = new Date();
@@ -60,10 +58,37 @@ export default function Home() {
         fetchHomeData();
     }, []);
 
-    const totalTopics = totalTopicsCount || 0;
+    // ── Métricas do setor ──────────────────────────────────────
+    const fetchMetrics = useCallback(async () => {
+        setMetricsLoading(true);
+        try {
+            const res = await fetch('/api/metrics', { cache: 'no-store' });
+            if (res.ok) {
+                const json = await res.json();
+                if (json.data && json.data.length > 0) {
+                    setMetrics(json.data);
+                }
+            }
+        } catch (err) {
+            console.warn('[metrics] Usando fallback:', err);
+        } finally {
+            setMetricsLoading(false);
+            setMetricsLastFetch(new Date());
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchMetrics();
+        // Recarrega automaticamente a cada 12 horas
+        const interval = setInterval(fetchMetrics, 12 * 60 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, [fetchMetrics]);
+
+    const m1 = metrics[0] ?? FALLBACK_METRICS[0];
+    const m2 = metrics[1] ?? FALLBACK_METRICS[1];
 
     return (
-        <div className="bg-gray-50 min-h-full flex flex-col">
+        <div className="bg-transparent min-h-full flex flex-col">
             <div className="p-6 space-y-6">
                 <div className="space-y-2">
                     <h1 className="text-3xl font-black text-blue-900 leading-tight uppercase italic tracking-tighter">
@@ -72,20 +97,54 @@ export default function Home() {
                     <p className="text-xs text-gray-500 font-medium">Junte-se a +1.200 corredores apaixonados pelo asfalto.</p>
                 </div>
 
-                {/* Quick Stats Banner */}
+                {/* ── Métricas do Setor ────────────────────────── */}
                 <div className="grid grid-cols-2 gap-3 mb-2 animate-in slide-in-from-top-4 duration-500 delay-200">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-4 rounded-3xl text-white shadow-lg shadow-blue-200 relative overflow-hidden">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Corredores On</p>
-                        <h4 className="text-2xl font-black italic">1.2k</h4>
+                    {/* Card 1 */}
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-4 rounded-3xl text-white relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">{m1.label}</p>
+                            <h4 className="text-2xl font-black italic leading-none">{m1.value}</h4>
+                            {m1.sublabel && (
+                                <p className="text-[8px] opacity-70 mt-1 leading-tight">{m1.sublabel}</p>
+                            )}
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                            <div>
+                                <p className="text-[7px] opacity-50 font-bold uppercase tracking-wider">Fonte: {m1.source_name}</p>
+                                <p className="text-[7px] opacity-40">Atualizado: {formatLastUpdated(m1.last_updated)}</p>
+                            </div>
+                            <button
+                                onClick={fetchMetrics}
+                                disabled={metricsLoading}
+                                className="opacity-40 hover:opacity-80 transition-opacity"
+                                title="Atualizar métricas"
+                            >
+                                <RefreshCw className={`w-3 h-3 ${metricsLoading ? 'animate-spin' : ''}`} />
+                            </button>
+                        </div>
                         <div className="absolute -right-2 -bottom-2 opacity-10">
-                            <TrendingUp className="w-16 h-16" />
+                            <Users className="w-16 h-16" />
                         </div>
                     </div>
-                    <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-3xl text-white shadow-lg shadow-green-200 relative overflow-hidden">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Total de Tópicos</p>
-                        <h4 className="text-2xl font-black italic">{totalTopics}</h4>
+
+                    {/* Card 2 */}
+                    <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-3xl text-white relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">{m2.label}</p>
+                            <h4 className="text-2xl font-black italic leading-none">{m2.value}</h4>
+                            {m2.sublabel && (
+                                <p className="text-[8px] opacity-70 mt-1 leading-tight">{m2.sublabel}</p>
+                            )}
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                            <div>
+                                <p className="text-[7px] opacity-50 font-bold uppercase tracking-wider">Fonte: {m2.source_name}</p>
+                                <p className="text-[7px] opacity-40">Atualizado: {formatLastUpdated(m2.last_updated)}</p>
+                            </div>
+                            <TrendingUp className="w-3 h-3 opacity-40" />
+                        </div>
                         <div className="absolute -right-2 -bottom-2 opacity-10">
-                            <MessageSquare className="w-16 h-16" />
+                            <TrendingUp className="w-16 h-16" />
                         </div>
                     </div>
                 </div>
@@ -129,13 +188,23 @@ export default function Home() {
                     <h2 className="text-sm font-black text-gray-800 uppercase italic tracking-tighter">O que estão falando</h2>
                     <div className="space-y-3">
                         {latestTopics.map(topic => (
-                            <Link key={topic.id} href={`/t/${topic.id}`} className="block p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-green-200 active:scale-95 transition-all">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <img src={topic.profile?.avatar_url} className="w-4 h-4 rounded-full" alt="Avatar" />
-                                    <span className="text-[10px] font-black text-blue-600 uppercase italic tracking-tighter">{topic.profile?.username}</span>
-                                    <span className="text-[10px] text-gray-300 ml-auto">{MOCK_COMMUNITIES.find(c => c.id === topic.community_id)?.name.split(' ')[0]}</span>
+                            <Link
+                                key={topic.id}
+                                href={`/t/${topic.id}`}
+                                className="group flex items-center p-4 bg-white border border-gray-100 rounded-3xl hover:border-blue-400 transition-all active:scale-[0.98]"
+                            >
+                                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                    <img src={topic.profile?.avatar_url} className="w-full h-full object-cover" alt="Avatar" />
                                 </div>
-                                <h4 className="text-sm font-bold text-gray-800 leading-snug line-clamp-1">{topic.title}</h4>
+                                <div className="flex-1 min-w-0 ml-4">
+                                    <h3 className="font-black text-blue-900 truncate uppercase italic leading-none mb-1">{topic.title}</h3>
+                                    <p className="text-xs text-gray-500 leading-tight font-medium line-clamp-1">{topic.content}</p>
+                                    <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{topic.profile?.username}</span>
+                                        <span className="h-1 w-1 bg-gray-200 rounded-full"></span>
+                                        <span>{MOCK_COMMUNITIES.find(c => c.id === topic.community_id)?.name.split(' ')[0] ?? 'Comunidade'}</span>
+                                    </div>
+                                </div>
                             </Link>
                         ))}
                     </div>
@@ -216,7 +285,7 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <div className="px-4 pb-4">
-                                    <div className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-100 flex items-center justify-center gap-2 group-hover:gap-4 transition-all">
+                                    <div className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-orange-600 flex items-center justify-center gap-2 group-hover:gap-4 transition-all">
                                         <span>Garantir Inscrição</span>
                                         <ChevronRight className="w-4 h-4" strokeWidth={3} />
                                     </div>

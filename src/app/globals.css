@@ -1,57 +1,214 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #2563eb;
-  --color-brand-green: #22c55e;
+    --color-brand-blue: #2755D4;
+    --color-brand-green: #22c55e;
+
+    /* ── Azul BrasilRun (camiseta) ─────────────────── */
+    --color-blue-50: #eef1fb;
+    --color-blue-100: #d5ddf5;
+    --color-blue-200: #adbcea;
+    --color-blue-300: #7e97de;
+    --color-blue-400: #5574d9;
+    --color-blue-500: #3a5fd6;
+    --color-blue-600: #2755D4;
+    --color-blue-700: #1e45b0;
+    --color-blue-800: #17368c;
+    --color-blue-900: #102368;
+    --color-blue-950: #0a1644;
 }
 
 :root {
-  --background: #f0f2f5;
-  --foreground: #1a1a1a;
+    --background: #f0f2f5;
+    --foreground: #1a1a1a;
 }
 
 body {
-  background-color: #f0f2f5;
-  color: #1a1a1a;
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
+    background-color: #f0f2f5;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════════
+   AZUL BRASILRUN — override direto das classes Tailwind
+   Cor da camiseta: #2755D4 (Royal Blue)
+   ══════════════════════════════════════════════════════ */
+
+/* backgrounds */
+.bg-blue-50 {
+    background-color: #eef1fb !important;
+}
+
+.bg-blue-100 {
+    background-color: #d5ddf5 !important;
+}
+
+.bg-blue-200 {
+    background-color: #adbcea !important;
+}
+
+.bg-blue-400 {
+    background-color: #5574d9 !important;
+}
+
+.bg-blue-500 {
+    background-color: #3a5fd6 !important;
+}
+
+.bg-blue-600 {
+    background-color: #2755D4 !important;
+}
+
+.bg-blue-700 {
+    background-color: #1e45b0 !important;
+}
+
+.bg-blue-800 {
+    background-color: #17368c !important;
+}
+
+.bg-blue-900 {
+    background-color: #102368 !important;
+}
+
+/* hover backgrounds */
+.hover\:bg-blue-50:hover {
+    background-color: #eef1fb !important;
+}
+
+.hover\:bg-blue-600:hover {
+    background-color: #2755D4 !important;
+}
+
+.hover\:bg-blue-700:hover {
+    background-color: #1e45b0 !important;
+}
+
+/* group-hover backgrounds */
+.group:hover .group-hover\:bg-blue-600 {
+    background-color: #2755D4 !important;
+}
+
+/* text colors */
+.text-blue-100 {
+    color: #d5ddf5 !important;
+}
+
+.text-blue-400 {
+    color: #5574d9 !important;
+}
+
+.text-blue-500 {
+    color: #3a5fd6 !important;
+}
+
+.text-blue-600 {
+    color: #2755D4 !important;
+}
+
+.text-blue-700 {
+    color: #1e45b0 !important;
+}
+
+.text-blue-800 {
+    color: #17368c !important;
+}
+
+.text-blue-900 {
+    color: #102368 !important;
+}
+
+/* hover text */
+.hover\:text-blue-600:hover {
+    color: #2755D4 !important;
+}
+
+.group:hover .group-hover\:text-white {
+    color: #ffffff !important;
+}
+
+/* borders */
+.border-blue-100 {
+    border-color: #d5ddf5 !important;
+}
+
+.border-blue-200 {
+    border-color: #adbcea !important;
+}
+
+.border-blue-400 {
+    border-color: #5574d9 !important;
+}
+
+.border-blue-600 {
+    border-color: #2755D4 !important;
+}
+
+/* gradients */
+.from-blue-600 {
+    --tw-gradient-from: #2755D4 !important;
+}
+
+.to-blue-800 {
+    --tw-gradient-to: #17368c !important;
+}
+
+/* shadows */
+.shadow-blue-100 {
+    --tw-shadow-color: #d5ddf5 !important;
+}
+
+/* rings */
+.focus\:ring-blue-500\/20:focus {
+    --tw-ring-color: rgb(58 95 214 / 0.2) !important;
+}
+
+/* opacities / slash variants */
+.bg-blue-900\/40 {
+    background-color: rgb(16 35 104 / 0.4) !important;
+}
+
+.text-blue-700\/60 {
+    color: rgb(30 69 176 / 0.6) !important;
 }
 
 /* Explicit layout constraint to fix "broken" appearance */
 .brasilrun-container {
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  min-height: 100vh;
-  background-color: white;
-  position: relative;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: 100vh;
+    background-color: white;
+    position: relative;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Mobile view styling remains isolated to smaller screens */
 @media (max-width: 1023px) {
-  .brasilrun-container {
-    max-width: 448px;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-  }
+    .brasilrun-container {
+        max-width: 448px;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+    }
 }
 
 /* Desktop version expands and integrates with the sidebar */
 @media (min-width: 1024px) {
-  .brasilrun-container {
-    max-width: 100%;
-    background-color: transparent;
-  }
+    .brasilrun-container {
+        max-width: 100%;
+        background-color: transparent;
+    }
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
+
 .scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

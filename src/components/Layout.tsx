@@ -76,19 +76,19 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
 
             <nav className="flex-1 space-y-2">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Menu Principal</p>
-                <Link href="/" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                <Link href="/" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
                     <Home className="w-5 h-5" />
                     <span className="font-bold">Feed Oficial</span>
                 </Link>
-                <Link href="/communities" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/communities') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                <Link href="/communities" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/communities') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
                     <Users className="w-5 h-5" />
                     <span className="font-bold">Comunidades</span>
                 </Link>
-                <Link href="/reviews" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/reviews') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                <Link href="/reviews" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/reviews') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
                     <Gift className="w-5 h-5" />
                     <span className="font-bold">Vitrine & Review</span>
                 </Link>
-                <Link href="/blog" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/blog') ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                <Link href="/blog" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/blog') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
                     <LayoutDashboard className="w-5 h-5" />
                     <span className="font-bold">Conteúdo Editorial</span>
                 </Link>
@@ -147,7 +147,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                         <img src={user.avatar_url} className="w-10 h-10 rounded-xl object-cover shadow-sm" alt="Profile" />
                     </div>
                 ) : (
-                    <Link href="/auth" className="bg-blue-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-100 hover:scale-105 active:scale-95 transition-all">
+                    <Link href="/auth" className="bg-blue-600 text-white px-6 py-2.5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border border-blue-700">
                         Entrar na Comunidade
                     </Link>
                 )}
@@ -201,7 +201,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                                     <div className={`relative w-full bg-black overflow-hidden group transition-all duration-500 ease-in-out lg:rounded-[2rem] lg:mb-8 ${pathname.startsWith('/blog') && !isPlayerExpanded ? 'h-0 opacity-0' : 'aspect-video opacity-100'}`}>
                                         <iframe
                                             className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
-                                            src="https://www.youtube.com/embed/dQw4w9WgXcQ?controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
+                                            src="https://www.youtube.com/embed/sEIZEYLlUtA?controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
                                             title="BrasilRun Explainer"
                                             frameBorder="0"
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -212,7 +212,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                                 </section>
                             )}
 
-                            <div className="flex-1 bg-white lg:bg-transparent lg:rounded-none">
+                            <div className="flex-1 bg-transparent lg:rounded-none">
                                 {children}
                             </div>
 
@@ -263,13 +263,65 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                                         <Star className="w-8 h-8 text-yellow-400 mb-4 animate-pulse" />
                                         <h4 className="text-xl font-black italic uppercase leading-tight mb-2">Seja Membro Premium</h4>
                                         <p className="text-xs text-blue-100 font-medium mb-4">Acesso a treinos exclusivos e descontos em provas.</p>
-                                        <button className="bg-white text-blue-600 text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-green-500 hover:text-white transition-all shadow-lg">Descobrir Vantagens</button>
+                                        <button className="bg-white text-blue-600 text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-green-500 hover:text-white transition-all border border-white/30">Descobrir Vantagens</button>
                                     </div>
                                     <div className="absolute -bottom-10 -right-10 opacity-10 group-hover:scale-125 transition-all">
                                         <Users className="w-48 h-48" />
                                     </div>
                                 </div>
+                                {/* ── Ad Block 1 ─────────────────────────── */}
+                                <a
+                                    href="#"
+                                    target="_blank"
+                                    rel="sponsored noopener noreferrer"
+                                    className="block rounded-[2rem] overflow-hidden border border-gray-100 bg-white group relative"
+                                >
+                                    <div className="relative h-36 overflow-hidden">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1608231387042-66d1773d3028?auto=format&fit=crop&w=600&q=80"
+                                            alt="Ad – Tênis de Corrida"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                                        <span className="absolute top-3 right-3 text-[8px] font-black bg-black/30 backdrop-blur-md text-white px-2 py-0.5 rounded-full uppercase tracking-widest">Patrocinado</span>
+                                        <div className="absolute bottom-3 left-4 right-4">
+                                            <p className="text-[9px] font-black text-green-400 uppercase tracking-[0.15em] leading-none mb-0.5">Nova Temporada</p>
+                                            <h4 className="text-sm font-black text-white italic uppercase leading-tight">Tênis & Acessórios</h4>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 flex items-center justify-between">
+                                        <p className="text-[10px] font-bold text-gray-500">Equipamentos para corredores</p>
+                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">Ver ofertas →</span>
+                                    </div>
+                                </a>
+
+                                {/* ── Ad Block 2 ─────────────────────────── */}
+                                <a
+                                    href="#"
+                                    target="_blank"
+                                    rel="sponsored noopener noreferrer"
+                                    className="block rounded-[2rem] overflow-hidden border border-gray-100 bg-white group relative"
+                                >
+                                    <div className="relative h-36 overflow-hidden">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80"
+                                            alt="Ad – Corrida de Rua"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                                        <span className="absolute top-3 right-3 text-[8px] font-black bg-black/30 backdrop-blur-md text-white px-2 py-0.5 rounded-full uppercase tracking-widest">Patrocinado</span>
+                                        <div className="absolute bottom-3 left-4 right-4">
+                                            <p className="text-[9px] font-black text-orange-400 uppercase tracking-[0.15em] leading-none mb-0.5">Inscrições Abertas</p>
+                                            <h4 className="text-sm font-black text-white italic uppercase leading-tight">Corridas de Rua 2025</h4>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 flex items-center justify-between">
+                                        <p className="text-[10px] font-bold text-gray-500">Garanta sua vaga agora</p>
+                                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider">Inscrever-se →</span>
+                                    </div>
+                                </a>
                             </aside>
+
                         )}
                     </div>
 
@@ -283,7 +335,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                             <Users className="w-4 h-4" />
                             <span className="text-[8px] font-bold uppercase tracking-tighter">Grupos</span>
                         </Link>
-                        <Link href="/c/dicas-tenis/new" className="relative -top-5 bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-2xl p-3 shadow-xl border-4 border-white text-white active:scale-90 transition-all">
+                        <Link href="/c/dicas-tenis/new" className="relative -top-5 bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-2xl p-3 border-4 border-white text-white active:scale-90 transition-all">
                             <Plus className="w-6 h-6" strokeWidth={3} />
                         </Link>
                         <button onClick={() => setShowSearch(true)} className="flex flex-col items-center gap-1 text-gray-400">

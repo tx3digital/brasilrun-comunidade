@@ -88,6 +88,7 @@ export interface BlogPost {
     title: string;
     excerpt: string;
     content: string;
+    sources?: string;
     image_url: string;
     category: string;
     author: string;

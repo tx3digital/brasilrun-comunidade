@@ -157,7 +157,7 @@ export default function CommunityDetail() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Atividade Recente</h3>
-                            <Link href={`/c/${community.slug}/new`} className="bg-green-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase shadow-lg">Criar Tópico</Link>
+                            <Link href={`/c/${community.slug}/new`} className="bg-green-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase border border-green-600">Criar Tópico</Link>
                         </div>
                         {topics.map(topic => (
                             <Link key={topic.id} href={`/t/${topic.id}`} className="block p-4 border rounded-2xl bg-white border-gray-100 hover:shadow-md transition-all">
