@@ -103,7 +103,7 @@ export default function TopicDetail() {
                 topic_id: topic.id,
                 user_id: user.id,
                 content: newReply.trim(),
-                status: 'pending',
+                status: 'pending' as const,
             };
 
             // Try insert + select (may be blocked by RLS SELECT policy)
