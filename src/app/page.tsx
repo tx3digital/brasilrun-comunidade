@@ -288,7 +288,7 @@ export default function Home() {
                                     <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
                                         <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{topic.profile?.username}</span>
                                         <span className="h-1 w-1 bg-gray-200 rounded-full"></span>
-                                        <span>{MOCK_COMMUNITIES.find(c => c.id === topic.community_id)?.name.split(' ')[0] ?? 'Comunidade'}</span>
+                                        <span>{communities.find(c => c.id === topic.community_id)?.name?.split(' ')[0] ?? 'Comunidade'}</span>
                                     </div>
                                 </div>
                             </Link>
