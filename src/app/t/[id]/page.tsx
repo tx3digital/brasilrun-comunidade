@@ -16,7 +16,19 @@ export default function TopicDetail() {
     const [loading, setLoading] = useState(true);
     const [newReply, setNewReply] = useState('');
     const [isLiking, setIsLiking] = useState(false);
+    const [hasLiked, setHasLiked] = useState(false);
     const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+
+    // Chave para rastrear likes no localStorage (evita duplo clique)
+    const likeKey = `liked_topic_${id}`;
+
+    const formatRelativeTime = (dateStr: string) => {
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return 'agora mesmo';
+        if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+        if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
+        return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    };
 
     useEffect(() => {
         const fetchTopicData = async () => {
@@ -44,7 +56,7 @@ export default function TopicDetail() {
                         .from('replies')
                         .select('*, profile:profiles(*)')
                         .eq('topic_id', id)
-                        .eq('xtatus', 'approved')
+                        .eq('status', 'approved')
                         .order('created_at', { ascending: true });
 
                     if (repliesError) {
@@ -67,6 +79,12 @@ export default function TopicDetail() {
 
         fetchTopicData();
     }, [id]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setHasLiked(localStorage.getItem(likeKey) === 'true');
+        }
+    }, [likeKey]);
 
     const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('brasilrun_user') || 'null') : null;
     const isAdmin = currentUser?.role === 'admin';
@@ -220,16 +238,33 @@ export default function TopicDetail() {
 
                 <div className="mt-8 flex items-center justify-between gap-3">
                     <button
-                        onClick={() => setIsLiking(!isLiking)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isLiking ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-600 border border-gray-100'}`}
+                        onClick={async () => {
+                            if (hasLiked || isLiking || !topic) return;
+                            setIsLiking(true);
+                            try {
+                                const newCount = (topic.likes_count || 0) + 1;
+                                const { error } = await supabase
+                                    .from('topics')
+                                    .update({ likes_count: newCount })
+                                    .eq('id', topic.id);
+                                if (!error) {
+                                    setTopic({ ...topic, likes_count: newCount });
+                                    setHasLiked(true);
+                                    localStorage.setItem(likeKey, 'true');
+                                }
+                            } finally {
+                                setIsLiking(false);
+                            }
+                        }}
+                        disabled={hasLiked || isLiking}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            hasLiked
+                                ? 'bg-red-50 text-red-600 border border-red-100 cursor-default'
+                                : 'bg-gray-50 text-gray-600 border border-gray-100 hover:bg-red-50 hover:text-red-500'
+                        }`}
                     >
-                        <Heart className={`w-3 h-3 ${isLiking ? 'fill-current' : ''}`} />
-                        <span>{topic.likes_count! + (isLiking ? 1 : 0)} Gostei</span>
-                    </button>
-
-                    <button className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-600 hover:scale-105 active:scale-95 transition-all">
-                        <Sparkles className="w-3 h-3" />
-                        ✨ Dica do Coach
+                        <Heart className={`w-3 h-3 ${hasLiked ? 'fill-current' : ''}`} />
+                        <span>{topic.likes_count || 0} Gostei</span>
                     </button>
                 </div>
             </div>
@@ -244,9 +279,9 @@ export default function TopicDetail() {
                         <div className="flex items-center gap-2 mb-2">
                             <img src={reply.profile?.avatar_url} alt="Avatar" className="w-6 h-6 rounded-full border border-blue-50" />
                             <span className="text-[10px] font-black text-blue-800 uppercase italic tracking-tighter">{reply.profile?.username}</span>
-                            <span className="text-[9px] text-gray-300 font-bold ml-auto">Há pouco</span>
                         </div>
                         <p className="text-sm text-gray-700 font-medium leading-relaxed">{reply.content}</p>
+                        <p className="text-[9px] text-gray-300 font-bold mt-2 text-right">{formatRelativeTime(reply.created_at)}</p>
                     </div>
                 ))}
             </div>

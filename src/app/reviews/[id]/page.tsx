@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MOCK_PRODUCTS, MOCK_REVIEWS, MOCK_PROFILES } from '@/lib/mockData';
 import { Review } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
 
 export default function ProductDetail() {
     const params = useParams();
@@ -16,9 +17,8 @@ export default function ProductDetail() {
     const router = useRouter();
 
     const product = MOCK_PRODUCTS.find(p => p.id === id);
-    const [reviews, setReviews] = useState<Review[]>(
-        MOCK_REVIEWS.filter(r => r.product_id === id)
-    );
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(true);
 
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -31,6 +31,35 @@ export default function ProductDetail() {
         cons: '',
     });
 
+    useEffect(() => {
+        const fetchReviews = async () => {
+            setLoadingReviews(true);
+            try {
+                // Busca reviews reais do Supabase com join no profile
+                const { data, error } = await supabase
+                    .from('reviews')
+                    .select('*, profile:profiles(*)')
+                    .eq('target_id', id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Filtra mock reviews para este produto
+                const mockForProduct = MOCK_REVIEWS.filter(r => r.product_id === id);
+                
+                // Combina reais com mock
+                setReviews([...(data || []), ...mockForProduct]);
+            } catch (err) {
+                console.warn('Usando apenas reviews locais:', err);
+                setReviews(MOCK_REVIEWS.filter(r => r.product_id === id));
+            } finally {
+                setLoadingReviews(false);
+            }
+        };
+
+        if (id) fetchReviews();
+    }, [id]);
+
     if (!product) {
         return (
             <div className="p-8 text-center py-32">
@@ -40,38 +69,92 @@ export default function ProductDetail() {
         );
     }
 
-    const handleSubmitReview = () => {
+    const handleSubmitReview = async () => {
         if (!newReview.content.trim()) return;
 
         const savedUser = typeof window !== 'undefined' ? localStorage.getItem('brasilrun_user') : null;
-        const user = savedUser ? JSON.parse(savedUser) : MOCK_PROFILES[1];
+        if (!savedUser) {
+            router.push('/auth');
+            return;
+        }
 
-        const review: Review = {
-            id: `r-${Date.now()}`,
-            product_id: id,
-            user_id: user.id,
-            rating: newReview.rating,
-            content: newReview.content,
-            pros: newReview.pros,
-            cons: newReview.cons,
-            likes_count: 0,
-            created_at: new Date().toISOString(),
-            profile: {
-                id: user.id,
-                username: user.username,
-                avatar_url: user.avatar_url,
-                created_at: new Date().toISOString(),
-                trust_score: user.trust_score || 80,
-            },
-        };
+        const user = JSON.parse(savedUser);
 
-        setReviews(prev => [review, ...prev]);
-        setReviewSubmitted(true);
-        setNewReview({ rating: 5, content: '', pros: '', cons: '' });
-        setTimeout(() => {
-            setShowReviewForm(false);
-            setReviewSubmitted(false);
-        }, 2000);
+        try {
+            // 1. Tenta insert + select (pode ser bloqueado por RLS no SELECT)
+            const payload = {
+                target_id: String(id),
+                user_id: String(user.id),
+                rating: newReview.rating,
+                content: newReview.content,
+                pros: newReview.pros || null,
+                cons: newReview.cons || null,
+                likes_count: 0
+            };
+
+            const { data, error } = await supabase
+                .from('reviews')
+                .insert([payload])
+                .select('*, profile:profiles(*)')
+                .single();
+
+            if (error) {
+                // Log detalhado do erro real do Supabase
+                console.error('Supabase review error:', {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code,
+                });
+
+                // RLS pode bloquear o SELECT mas o INSERT ter funcionado.
+                // Tenta insert simples como fallback.
+                const { error: insertErr } = await supabase
+                    .from('reviews')
+                    .insert([payload]);
+
+                if (insertErr) {
+                    console.error('Insert direto falhou:', insertErr.message, insertErr.hint, insertErr.code);
+                    alert(`Erro ao salvar avaliação: ${insertErr.message || 'Verifique as políticas RLS da tabela reviews.'}`);
+                    return;
+                }
+
+                // INSERT ok mas SELECT bloqueado — usa UI otimista
+                const optimistic = {
+                    id: `local-${Date.now()}`,
+                    target_id: id,
+                    user_id: user.id,
+                    rating: newReview.rating,
+                    content: newReview.content,
+                    pros: newReview.pros,
+                    cons: newReview.cons,
+                    likes_count: 0,
+                    created_at: new Date().toISOString(),
+                    profile: {
+                        id: user.id,
+                        username: user.username,
+                        avatar_url: user.avatar_url,
+                        created_at: new Date().toISOString(),
+                        trust_score: user.trust_score || 80,
+                    },
+                };
+                setReviews(prev => [optimistic as any, ...prev]);
+            } else {
+                // 2. Sucesso total — usa dados reais retornados
+                setReviews(prev => [data, ...prev]);
+            }
+
+            setReviewSubmitted(true);
+            setNewReview({ rating: 5, content: '', pros: '', cons: '' });
+            
+            setTimeout(() => {
+                setShowReviewForm(false);
+                setReviewSubmitted(false);
+            }, 2000);
+        } catch (err: any) {
+            console.error('Erro inesperado ao salvar review:', err?.message || err);
+            alert(`Erro inesperado: ${err?.message || 'Verifique o console para mais detalhes.'}`);
+        }
     };
 
     const toggleLike = (reviewId: string) => {
@@ -151,7 +234,7 @@ export default function ProductDetail() {
                             className="flex items-center justify-center gap-3 w-full bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-black uppercase tracking-widest text-sm rounded-2xl py-4 shadow-lg shadow-amber-200 hover:scale-[1.02] active:scale-95 transition-all"
                         >
                             <ShoppingCart className="w-5 h-5" strokeWidth={2.5} />
-                            Comprar no Mercado Livre
+                            Ver Oferta
                             <ExternalLink className="w-4 h-4 opacity-60" />
                         </a>
                     )}

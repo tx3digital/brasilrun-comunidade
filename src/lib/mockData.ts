@@ -48,8 +48,42 @@ export const MOCK_TOPICS: Topic[] = [
 ];
 
 export const MOCK_EVENTS: RunningEvent[] = [
-    { id: 'e1', title: 'Maratona Internacional de SP 2025', date: '06 ABR 2025', location: 'São Paulo, SP', category: '42K | 21K | 10K', price_from: 'R$ 189,00', image_url: 'https://images.unsplash.com/photo-1530549387631-f31f9a247f6a?auto=format&fit=crop&w=800&q=80', affiliate_url: '#' }
+    {
+        id: 'e1',
+        title: 'Maratona Internacional de SP 2025',
+        slug: 'maratona-sp-2025',
+        date: '06 ABR 2025',
+        location: 'Ibirapuera, São Paulo',
+        city: 'São Paulo',
+        state: 'SP',
+        category: '42K | 21K | 10K',
+        description: 'A prova mais tradicional de São Paulo, passando pelos principais pontos turísticos da cidade com chegada no Ginásio do Ibirapuera.',
+        price_from: 'R$ 189,00',
+        image_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=400&q=80',
+        banner_url: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=1200&q=80',
+        organizer_name: 'Yescom',
+        status: 'approved',
+        created_at: new Date().toISOString()
+    },
+    {
+        id: 'e2',
+        title: 'Meia Maratona do Rio 2025',
+        slug: 'meia-rio-2025',
+        date: '18 MAI 2025',
+        location: 'Leblon ao Aterro, Rio de Janeiro',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        category: '21K | 5K',
+        description: 'Corra com o visual mais bonito do mundo, da orla do Leblon até o Aterro do Flamengo.',
+        price_from: 'R$ 175,00',
+        image_url: 'https://images.unsplash.com/photo-1594911772125-07604134812f?auto=format&fit=crop&w=400&q=80',
+        banner_url: 'https://images.unsplash.com/photo-1594911772125-07604134812f?auto=format&fit=crop&w=1200&q=80',
+        organizer_name: 'Dream Factory',
+        status: 'approved',
+        created_at: new Date().toISOString()
+    }
 ];
+
 
 export const MOCK_REPLIES: Reply[] = [
     {
@@ -108,3 +142,33 @@ export const MOCK_REVIEWS: Review[] = [
         profile: MOCK_PROFILES[1]
     }
 ];
+
+export const MOCK_RUNNING_GROUPS: any[] = [
+    {
+        id: 'rg1',
+        name: 'Pace Certo Assessoria',
+        slug: 'pace-certo',
+        description: 'Focada em performance e saúde, levamos você do sofá aos 42km com segurança.',
+        location: 'Parque Ibirapuera, SP',
+        city: 'São Paulo',
+        state: 'SP',
+        specialties: ['Maratona', 'Meia Maratona', 'Iniciantes'],
+        instagram_handle: '@pacecerto',
+        logo_url: 'https://images.unsplash.com/photo-1594911772125-07604134812f?auto=format&fit=crop&w=200&q=80',
+        status: 'approved'
+    },
+    {
+        id: 'rg2',
+        name: 'Vento Sul Trail Run',
+        slug: 'vento-sul',
+        description: 'Especialistas em corridas de montanha e ultramaratonas.',
+        location: 'Caminho do Itupava, PR',
+        city: 'Curitiba',
+        state: 'PR',
+        specialties: ['Trail Run', 'Ultra', 'Montanha'],
+        instagram_handle: '@ventosultrail',
+        logo_url: 'https://images.unsplash.com/photo-1533107862482-0e6974b06ec4?auto=format&fit=crop&w=200&q=80',
+        status: 'approved'
+    }
+];
+

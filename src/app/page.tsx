@@ -2,18 +2,31 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Topic, Community } from '@/lib/types';
+import { Topic, BlogPost } from '@/lib/types';
 import Link from 'next/link';
-import { TrendingUp, Users, ChevronRight, Footprints, Flag, Activity, Star, Loader2, RefreshCw } from 'lucide-react';
-import { MOCK_COMMUNITIES, MOCK_EVENTS } from '@/lib/mockData';
+import { TrendingUp, Users, ChevronRight, Footprints, Flag, Activity, Star, Loader2, RefreshCw, BookOpen, Flame, Clock, ChevronDown, Eye } from 'lucide-react';
+import { MOCK_EVENTS } from '@/lib/mockData';
 import { type Metric, FALLBACK_METRICS, formatLastUpdated } from '@/lib/metrics';
+import { getCategoryBySlug } from '@/lib/categories';
+
+const ARTICLES_PAGE_SIZE = 5;
 
 export default function Home() {
     const [latestTopics, setLatestTopics] = useState<Topic[]>([]);
+    const [communities, setCommunities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [metrics, setMetrics] = useState<Metric[]>(FALLBACK_METRICS);
     const [metricsLoading, setMetricsLoading] = useState(false);
     const [metricsLastFetch, setMetricsLastFetch] = useState<Date | null>(null);
+
+    // ── Editorial feed states ──────────────────────────────────
+    const [articles, setArticles] = useState<BlogPost[]>([]);
+    const [articlesPage, setArticlesPage] = useState(0);
+    const [articlesTotal, setArticlesTotal] = useState(0);
+    const [articlesLoading, setArticlesLoading] = useState(false);
+    const [articlesInitialized, setArticlesInitialized] = useState(false);
+    const [engagedArticles, setEngagedArticles] = useState<BlogPost[]>([]);
+    const [engagedLoading, setEngagedLoading] = useState(false);
 
     useEffect(() => {
         const fetchHomeData = async () => {
@@ -49,6 +62,20 @@ export default function Home() {
                 } else {
                     setLatestTopics(data || []);
                 }
+
+                // Busca comunidades reais com contagem de tópicos real
+                const { data: commData } = await supabase
+                    .from('communities')
+                    .select('*, topics(count)')
+                    .order('name')
+                    .limit(3);
+
+                if (commData) {
+                    setCommunities(commData.map((c: any) => ({
+                        ...c,
+                        topic_count: c.topics?.[0]?.count ?? 0,
+                    })));
+                }
             } catch (err) {
                 console.error('Error fetching home data:', err);
             } finally {
@@ -57,6 +84,59 @@ export default function Home() {
         };
         fetchHomeData();
     }, []);
+
+    // ── Editorial: últimas matérias ────────────────────────────
+    const fetchArticles = useCallback(async (page: number) => {
+        setArticlesLoading(true);
+        try {
+            const from = page * ARTICLES_PAGE_SIZE;
+            const to = from + ARTICLES_PAGE_SIZE - 1;
+            const { data, count, error } = await supabase
+                .from('blog_posts')
+                .select('*', { count: 'exact' })
+                .order('published_at', { ascending: false })
+                .range(from, to);
+            if (!error && data) {
+                setArticles(prev => page === 0 ? data : [...prev, ...data]);
+                setArticlesTotal(count ?? 0);
+            }
+        } catch (err) {
+            console.warn('[editorial] Erro ao buscar matérias:', err);
+        } finally {
+            setArticlesLoading(false);
+            setArticlesInitialized(true);
+        }
+    }, []);
+
+    // ── Editorial: mais engajadas (view_count ou like_count) ───
+    const fetchEngagedArticles = useCallback(async () => {
+        setEngagedLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .select('*')
+                .order('view_count', { ascending: false })
+                .limit(3);
+            if (!error && data) setEngagedArticles(data);
+        } catch (err) {
+            console.warn('[editorial-engaged] Erro ao buscar matérias engajadas:', err);
+        } finally {
+            setEngagedLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchArticles(0);
+        fetchEngagedArticles();
+    }, [fetchArticles, fetchEngagedArticles]);
+
+    const handleLoadMoreArticles = () => {
+        const next = articlesPage + 1;
+        setArticlesPage(next);
+        fetchArticles(next);
+    };
+
+    const hasMoreArticles = articles.length < articlesTotal;
 
     // ── Métricas do setor ──────────────────────────────────────
     const fetchMetrics = useCallback(async () => {
@@ -83,6 +163,12 @@ export default function Home() {
         const interval = setInterval(fetchMetrics, 12 * 60 * 60 * 1000);
         return () => clearInterval(interval);
     }, [fetchMetrics]);
+
+    // ── Helpers ────────────────────────────────────────────────
+    const fmtDate = (dateStr: string) => {
+        if (!dateStr) return '';
+        return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    };
 
     const m1 = metrics[0] ?? FALLBACK_METRICS[0];
     const m2 = metrics[1] ?? FALLBACK_METRICS[1];
@@ -157,7 +243,7 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                        {MOCK_COMMUNITIES.slice(0, 3).map((community, idx) => (
+                        {(communities.length > 0 ? communities : []).slice(0, 3).map((community, idx) => (
                             <Link
                                 key={community.id}
                                 href={`/c/${community.slug}`}
@@ -197,7 +283,7 @@ export default function Home() {
                                     <img src={topic.profile?.avatar_url} className="w-full h-full object-cover" alt="Avatar" />
                                 </div>
                                 <div className="flex-1 min-w-0 ml-4">
-                                    <h3 className="font-black text-blue-900 truncate uppercase italic leading-none mb-1">{topic.title}</h3>
+                                    <h3 className="text-sm sm:text-base font-black text-blue-900 truncate uppercase italic leading-none mb-1">{topic.title}</h3>
                                     <p className="text-xs text-gray-500 leading-tight font-medium line-clamp-1">{topic.content}</p>
                                     <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
                                         <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{topic.profile?.username}</span>
@@ -209,6 +295,161 @@ export default function Home() {
                         ))}
                     </div>
                 </section>
+
+                {/* ══════════════════════════════════════════════════
+                    CONTEÚDO EDITORIAL — Matérias
+                    ══════════════════════════════════════════════════ */}
+                <section className="space-y-5">
+
+                    {/* Header divider */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-transparent" />
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+                            <h2 className="text-sm font-black text-blue-900 uppercase italic tracking-tighter whitespace-nowrap">
+                                Conteúdo Editorial
+                            </h2>
+                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-l from-blue-200 to-transparent" />
+                    </div>
+
+                    {/* ── Mais lidas / engajadas ──────────────── */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            <span className="text-xs font-black text-gray-700 uppercase italic tracking-tighter">Mais Lidas</span>
+                        </div>
+
+                        {engagedLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                                <Loader2 className="w-5 h-5 text-orange-400 animate-spin" />
+                            </div>
+                        ) : engagedArticles.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-4">Nenhuma matéria encontrada.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {engagedArticles.map((art, idx) => {
+                                    const cat = getCategoryBySlug(art.category);
+                                    return (
+                                        <Link
+                                            key={art.id}
+                                            href={`/blog/${art.id}`}
+                                            className="group flex items-center p-4 bg-gradient-to-r from-orange-50 to-white border border-orange-100 rounded-3xl hover:border-orange-300 transition-all active:scale-[0.98]"
+                                        >
+                                            {/* Rank */}
+                                            <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-[11px] font-black mr-4
+                                                ${idx === 0 ? 'bg-orange-500 text-white' : idx === 1 ? 'bg-orange-200 text-orange-700' : 'bg-orange-100 text-orange-500'}`}>
+                                                {idx + 1}
+                                            </div>
+                                            {/* Thumbnail */}
+                                            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                {art.image_url
+                                                    ? <img src={art.image_url} alt={art.title} className="w-full h-full object-cover" />
+                                                    : <BookOpen className="w-5 h-5 text-orange-300" />
+                                                }
+                                            </div>
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0 ml-4">
+                                                <h3 className="text-sm sm:text-base font-black text-blue-900 truncate uppercase italic leading-none mb-1">
+                                                    {art.title}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 leading-tight font-medium line-clamp-1">{art.excerpt}</p>
+                                                {cat && (
+                                                    <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                                        <span className={`px-2 py-0.5 rounded-full ${cat.color} ${cat.textColor}`}>
+                                                            #{cat.label}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Views */}
+                                            {art.view_count != null && (
+                                                <div className="flex items-center gap-1 text-orange-400 flex-shrink-0">
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    <span className="text-[10px] font-black">{art.view_count.toLocaleString('pt-BR')}</span>
+                                                </div>
+                                            )}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Últimas matérias ────────────────────── */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs font-black text-gray-700 uppercase italic tracking-tighter">Últimas Matérias</span>
+                        </div>
+
+                        {!articlesInitialized && articlesLoading ? (
+                            <div className="flex items-center justify-center py-10">
+                                <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                            </div>
+                        ) : articles.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-4">Nenhuma matéria encontrada.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {articles.map((art, idx) => {
+                                    const cat = getCategoryBySlug(art.category);
+                                    return (
+                                        <Link
+                                            key={`${art.id}-${idx}`}
+                                            href={`/blog/${art.id}`}
+                                            className="group flex items-center p-4 bg-white border border-gray-100 rounded-3xl hover:border-blue-400 transition-all active:scale-[0.98]"
+                                        >
+                                            {/* Thumbnail */}
+                                            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                {art.image_url
+                                                    ? <img src={art.image_url} alt={art.title} className="w-full h-full object-cover" />
+                                                    : <BookOpen className="w-6 h-6 text-blue-200" />
+                                                }
+                                            </div>
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0 ml-4">
+                                                <h3 className="text-sm sm:text-base font-black text-blue-900 truncate uppercase italic leading-none mb-1">
+                                                    {art.title}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 leading-tight font-medium line-clamp-1">{art.excerpt}</p>
+                                                <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                                    {cat && (
+                                                        <span className={`px-2 py-0.5 rounded-full ${cat.color} ${cat.textColor}`}>
+                                                            #{cat.label}
+                                                        </span>
+                                                    )}
+                                                    <span className="h-1 w-1 bg-gray-200 rounded-full" />
+                                                    <span>{fmtDate(art.published_at)}</span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* ── Botão Carregar Mais ──────────────── */}
+                        {articlesInitialized && hasMoreArticles && (
+                            <button
+                                onClick={handleLoadMoreArticles}
+                                disabled={articlesLoading}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-black uppercase tracking-widest hover:bg-blue-100 hover:border-blue-300 active:scale-[0.98] transition-all disabled:opacity-60"
+                            >
+                                {articlesLoading ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /><span>Carregando...</span></>
+                                ) : (
+                                    <><ChevronDown className="w-4 h-4" /><span>Carregar mais 5 matérias</span></>
+                                )}
+                            </button>
+                        )}
+                        {articlesInitialized && !hasMoreArticles && articles.length > 0 && (
+                            <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest py-2">
+                                Você leu tudo! Volte em breve para novas matérias 📰
+                            </p>
+                        )}
+                    </div>
+                </section>
+                {/* ══════════════════════════════════════════════════ */}
 
                 {/* Ad Section */}
                 <section className="px-1">
@@ -247,7 +488,7 @@ export default function Home() {
                 {/* Events Section */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-black text-gray-800 uppercase italic tracking-tighter">Próximas Provas & Eventos</h2>
+                        <h2 className="text-sm font-black text-gray-800 uppercase italic tracking-tighter">Próximas Provas &amp; Eventos</h2>
                         <div className="flex items-center gap-1.5 bg-green-100 px-2 py-1 rounded-full">
                             <span className="text-[8px] font-black text-green-700 uppercase tracking-widest">Parceria Oficial</span>
                         </div>

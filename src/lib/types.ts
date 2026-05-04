@@ -111,12 +111,48 @@ export interface BlogComment {
 export interface RunningEvent {
     id: string;
     title: string;
+    slug: string;
     date: string;
     location: string;
+    city: string;
+    state: string;
     category: string;
+    description: string;
     price_from: string;
     participants_count?: number;
     image_url: string;
-    slug?: string;
+    banner_url?: string;
     affiliate_url?: string;
+    official_website?: string;
+    organizer_name: string;
+    status: 'pending' | 'approved' | 'rejected';
+    created_at: string;
+}
+
+
+export interface RunningGroup {
+    id: string;
+    name: string;
+    slug: string;
+    logo_url?: string;
+    description: string;
+    location: string;
+    city: string;
+    state: string;
+    contact_email?: string;
+    contact_phone?: string;
+    instagram_handle?: string;
+    website_url?: string;
+    specialties: string[];
+    head_coach?: string;
+    created_at: string;
+    status: 'pending' | 'approved' | 'rejected';
+}
+export interface AdPlacement {
+    id: string;
+    placement_id: string; // e.g. 'video_top'
+    page_path: string;    // e.g. '/', '/assessorias'
+    video_url: string;
+    is_active: boolean;
+    updated_at: string;
 }

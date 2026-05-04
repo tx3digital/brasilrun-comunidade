@@ -17,10 +17,15 @@ export default function Communities() {
             try {
                 const { data, error } = await supabase
                     .from('communities')
-                    .select('*')
+                    .select('*, topics(count)')
                     .order('name');
                 if (error) throw error;
-                setCommunities(data || []);
+                // Mapeia a contagem real de tópicos
+                const withRealCount = (data || []).map((c: any) => ({
+                    ...c,
+                    topic_count: c.topics?.[0]?.count ?? 0,
+                }));
+                setCommunities(withRealCount);
             } catch (err) {
                 console.error('Error fetching communities:', err);
             } finally {
@@ -70,25 +75,21 @@ export default function Communities() {
                     <Link
                         key={community.id}
                         href={`/c/${community.slug}`}
-                        className="group block p-5 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:border-blue-200 transition-all animate-in fade-in slide-in-from-bottom-4"
+                        className="group flex items-center p-4 bg-white border border-gray-100 rounded-3xl hover:border-blue-400 hover:shadow-xl hover:shadow-blue-100/50 transition-all active:scale-[0.98] animate-in fade-in slide-in-from-bottom-4"
                         style={{ animationDelay: `${idx * 100}ms` }}
                     >
-                        <div className="flex items-start gap-4">
-                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 group-hover:-rotate-3 transition-transform">
-                                {community.slug.includes('tenis') ? <Footprints className="w-8 h-8" /> : community.slug.includes('maratona') ? <Flag className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-lg font-black text-blue-900 uppercase italic leading-none mb-2">{community.name}</h3>
-                                <p className="text-xs text-gray-500 font-medium leading-tight line-clamp-2">{community.description}</p>
-
-                                <div className="mt-4 flex items-center gap-3">
-                                    <span className="text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-                                        {community.topic_count || 0} Tópicos
-                                    </span>
-                                    <span className="text-[10px] font-black uppercase text-gray-300">
-                                        Criado em {new Date(community.created_at).toLocaleDateString('pt-BR', { year: 'numeric', month: 'short' })}
-                                    </span>
-                                </div>
+                        <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 text-blue-600">
+                            {community.slug.includes('tenis') ? <Footprints className="w-8 h-8" /> : community.slug.includes('maratona') ? <Flag className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
+                        </div>
+                        <div className="flex-1 min-w-0 ml-4">
+                            <h3 className="font-black text-blue-900 truncate uppercase italic leading-none mb-1">{community.name}</h3>
+                            <p className="text-xs text-gray-500 line-clamp-2 leading-tight font-medium">
+                                {community.description}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">{community.topic_count || 0} tópicos</span>
+                                <span className="h-1 w-1 bg-gray-200 rounded-full"></span>
+                                <span className="truncate">Criado em {new Date(community.created_at).toLocaleDateString('pt-BR', { year: '2-digit', month: 'short' })}</span>
                             </div>
                         </div>
                     </Link>

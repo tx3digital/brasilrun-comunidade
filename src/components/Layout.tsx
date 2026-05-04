@@ -7,9 +7,9 @@ import {
     Home, Users, Search, Plus, Play, AlertTriangle, X,
     MessageSquare, ChevronDown, ChevronUp, Loader2,
     TrendingUp, Star, Menu, Bell, Settings, LogOut,
-    LayoutDashboard, Hash, Gift, User as UserIcon
+    LayoutDashboard, Hash, Gift, User as UserIcon, MapPin, Calendar
 } from 'lucide-react';
-import { AuthUser, Community, Topic } from '@/lib/types';
+import { AuthUser, Community, Topic, AdPlacement } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
 interface LayoutProps {
@@ -27,8 +27,24 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
     const [searchResults, setSearchResults] = useState<{ communities: Community[], topics: Topic[] }>({ communities: [], topics: [] });
     const [isSearching, setIsSearching] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
 
     const isActive = (path: string) => pathname === path;
+
+    useEffect(() => {
+        const fetchAds = async () => {
+            try {
+                const { data } = await supabase
+                    .from('ad_placements')
+                    .select('*')
+                    .eq('is_active', true);
+                if (data) setAdPlacements(data);
+            } catch (err) {
+                console.warn('Could not fetch ad placements:', err);
+            }
+        };
+        fetchAds();
+    }, [pathname]);
 
     useEffect(() => {
         const performSearch = async () => {
@@ -88,6 +104,14 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                     <Gift className="w-5 h-5" />
                     <span className="font-bold">Vitrine & Review</span>
                 </Link>
+                <Link href="/assessorias" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/assessorias') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                    <MapPin className="w-5 h-5" />
+                    <span className="font-bold">Assessorias</span>
+                </Link>
+                <Link href="/eventos" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/eventos') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
+                    <Calendar className="w-5 h-5" />
+                    <span className="font-bold">Calendário de Provas</span>
+                </Link>
                 <Link href="/blog" className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive('/blog') ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'}`}>
                     <LayoutDashboard className="w-5 h-5" />
                     <span className="font-bold">Conteúdo Editorial</span>
@@ -108,6 +132,9 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
 
             {user?.role === 'admin' && (
                 <div className="space-y-2">
+                    <Link href="/admin/ads" className="block bg-blue-600 text-white p-4 rounded-2xl text-[10px] font-black uppercase text-center tracking-widest hover:bg-blue-700 transition-all mb-2">
+                        💰 Gestão de Publicidade
+                    </Link>
                     <Link href="/admin/content" className="block bg-green-600 text-white p-4 rounded-2xl text-[10px] font-black uppercase text-center tracking-widest hover:bg-green-700 transition-all">
                         📝 Painel de Conteúdo
                     </Link>
@@ -188,6 +215,8 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                         <Link href="/" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Início</Link>
                         <Link href="/communities" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/communities') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Comunidades</Link>
                         <Link href="/reviews" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/reviews') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Vitrine</Link>
+                        <Link href="/assessorias" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/assessorias') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Assessorias</Link>
+                        <Link href="/eventos" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/eventos') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Eventos</Link>
                         <Link href="/blog" className={`font-black uppercase tracking-wider px-2 py-1 rounded-md ${isActive('/blog') ? 'bg-blue-600 text-white shadow-sm' : 'text-blue-700/60'}`}>Conteúdo</Link>
                         <button onClick={() => setShowSearch(true)} className="font-black uppercase tracking-wider text-blue-700/60 px-2">Busca</button>
                     </nav>
@@ -201,8 +230,46 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout }) => {
                                     <div className={`relative w-full bg-black overflow-hidden group transition-all duration-500 ease-in-out lg:rounded-[2rem] lg:mb-8 ${pathname.startsWith('/blog') && !isPlayerExpanded ? 'h-0 opacity-0' : 'aspect-video opacity-100'}`}>
                                         <iframe
                                             className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity"
-                                            src="https://www.youtube.com/embed/sEIZEYLlUtA?controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
-                                            title="BrasilRun Explainer"
+                                            src={(() => {
+                                                const normalize = (p: string) => {
+                                                    if (!p) return '/';
+                                                    let path = p.trim().toLowerCase();
+                                                    if (!path.startsWith('/')) path = '/' + path;
+                                                    if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+                                                    return path;
+                                                };
+                                                
+                                                const current = normalize(pathname);
+                                                
+                                                // Tenta encontrar o melhor match (Hierarquia)
+                                                // 1. Match Exato
+                                                let ad = adPlacements.find(a => normalize(a.page_path) === current);
+                                                
+                                                // 2. Match por Categoria/Pai (ex: /eventos/meia-rio -> /eventos)
+                                                if (!ad) {
+                                                    const segments = current.split('/').filter(Boolean);
+                                                    if (segments.length > 0) {
+                                                        const parent = '/' + segments[0];
+                                                        ad = adPlacements.find(a => normalize(a.page_path) === parent);
+                                                    }
+                                                }
+                                                
+                                                // 3. Fallback para Home
+                                                if (!ad) {
+                                                    ad = adPlacements.find(a => normalize(a.page_path) === '/');
+                                                }
+
+                                                const url = ad?.video_url;
+                                                
+                                                if (!url) return "https://www.youtube.com/embed/sEIZEYLlUtA?controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3";
+                                                
+                                                // Convert standard YouTube URLs to Embed URLs
+                                                if (url.includes('youtube.com/embed/')) return url;
+                                                const videoIdMatch = url.match(/(?:v=|v\/|vi=|vi\/|youtu\.be\/|embed\/|watch\?v=)([^#?&]*)/);
+                                                const videoId = videoIdMatch ? videoIdMatch[1] : null;
+                                                return videoId ? `https://www.youtube.com/embed/${videoId}?controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3` : url;
+                                            })()}
+                                            title="BrasilRun Featured Video"
                                             frameBorder="0"
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowFullScreen
